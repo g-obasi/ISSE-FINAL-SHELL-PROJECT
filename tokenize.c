@@ -93,24 +93,21 @@ char* process_escape_sequences(const char* str) {
 }
 
 
-// Documented in the .h file
 CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz) {
     CList tokens = CL_new();
     size_t input_length = strlen(input);
     size_t position = 0;
 
     while (position < input_length) {
-
         char currentChar = input[position];
-        // Skip whitespace
+
         if (isspace(currentChar)) {
             position++;
             continue;
-            // Handle special characters as separate tokens
-        } else if (strchr("|><;", currentChar) != NULL) {
+        } else if (strchr("|><", currentChar) != NULL) {
             if (position == 0 || position == input_length - 1 ||
-                strchr("|><;", input[position - 1]) != NULL ||
-                strchr("|><;", input[position + 1]) != NULL) {
+                strchr("|><", input[position - 1]) != NULL ||
+                strchr("|><", input[position + 1]) != NULL) {
                 snprintf(errmsg, errmsg_sz, "Invalid use of special character '%c'", currentChar);
                 return NULL;
             }
@@ -120,54 +117,43 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz) {
             CL_insert(tokens, newToken, -1);
             position++;
             continue;
-            // handle quoted string
-        }else if (currentChar == '\"') {
+        } else if (currentChar == '\"') {
             size_t quote_end = position + 1;
             while (quote_end < input_length && input[quote_end] != '\"') {
-                // Skip escaped quotes
                 if (input[quote_end] == '\\' && (quote_end + 1) < input_length && input[quote_end + 1] == '\"') {
                     quote_end += 2;
                 } else {
                     quote_end++;
                 }
             }
-
-            // Extract the quoted string
             char* quoted_string = strndup(&input[position +1], quote_end - position - 1);
             char* processed_quoted_string = process_escape_sequences(quoted_string);
             free(quoted_string);
 
-            // Create a new token with the processed quoted string
             Token newToken;
             newToken.type = determine_token_type(&currentChar);
             newToken.value = processed_quoted_string;
             CL_insert(tokens, newToken, -1);
 
-            // Move the position to the end of the quoted string
             position = quote_end + 1;
             continue;
-        }  else {
-            // Handle non-quoted strings
+        } else {
             size_t word_end = position;
             while (word_end < input_length && !isspace(input[word_end]) &&
-                   !strchr("|><;\"", input[word_end])) {
+                   !strchr("|><\"", input[word_end])) {
                 if (input[word_end] == '\\' && (word_end + 1) < input_length) {
-                    // Skip escaped characters
                     word_end += 2;
                 } else {
                     word_end++;
                 }
             }
 
-                // Extract the word
-                char* word = strndup(&input[position], word_end - position);
-                char* processed_word = process_escape_sequences(word);
-                free(word);
+            char* word = strndup(&input[position], word_end - position);
+            char* processed_word = process_escape_sequences(word);
+            free(word);
 
-                // Determine the token type
-                TokenType type = determine_token_type(processed_word);
+            TokenType type = determine_token_type(processed_word);
 
-            // Globbing
             glob_t glob_result;
             if (glob(processed_word, GLOB_TILDE_CHECK, NULL, &glob_result) == 0) {
                 for (size_t i = 0; i < glob_result.gl_pathc; i++) {
@@ -178,51 +164,152 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz) {
                 }
                 globfree(&glob_result);
             } else {
-
-                // Create a new token with the processed word and type
                 Token newToken;
                 newToken.type = type;
                 newToken.value = processed_word;
                 CL_insert(tokens, newToken, -1);
             }
 
-            // Move the position to the end of the word or the special character
             position = word_end;
         }
-
-        if (position < input_length && input[position] == '\"'){
-            size_t quote_end = position + 1;
-            while (quote_end < input_length && input[quote_end] != '\"') {
-                // Skip escaped quotes
-                if (input[quote_end] == '\\' && (quote_end + 1) < input_length && input[quote_end + 1] == '\"') {
-                    quote_end += 2;
-                } else {
-                    quote_end++;
-                }
-            }
-
-            // Extract the quoted string
-            char* quoted_string = strndup(&input[position +1], quote_end - position - 1);
-            char* processed_quoted_string = process_escape_sequences(quoted_string);
-            free(quoted_string);
-
-            // Create a new token with the processed quoted string
-            Token newToken;
-            newToken.type =  determine_token_type(&currentChar);
-            newToken.value = processed_quoted_string;
-            CL_insert(tokens, newToken, -1);
-
-            // Move the position to the end of the quoted string
-            position = quote_end + 1;
-            continue;
-
-
-        }
-
     }
 
     return tokens;
 }
+
+
+
+
+// Documented in the .h file
+//CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz) {
+//    CList tokens = CL_new();
+//    size_t input_length = strlen(input);
+//    size_t position = 0;
+//
+//    while (position < input_length) {
+//
+//        char currentChar = input[position];
+//        // Skip whitespace
+//        if (isspace(currentChar)) {
+//            position++;
+//            continue;
+//            // Handle special characters as separate tokens
+//        } else if (strchr("|><;", currentChar) != NULL) {
+//            if (position == 0 || position == input_length - 1 ||
+//                strchr("|><;", input[position - 1]) != NULL ||
+//                strchr("|><;", input[position + 1]) != NULL) {
+//                snprintf(errmsg, errmsg_sz, "Invalid use of special character '%c'", currentChar);
+//                return NULL;
+//            }
+//            Token newToken;
+//            newToken.type = determine_token_type(&currentChar);
+//            newToken.value = NULL;
+//            CL_insert(tokens, newToken, -1);
+//            position++;
+//            continue;
+//            // handle quoted string
+//        }else if (currentChar == '\"') {
+//            size_t quote_end = position + 1;
+//            while (quote_end < input_length && input[quote_end] != '\"') {
+//                // Skip escaped quotes
+//                if (input[quote_end] == '\\' && (quote_end + 1) < input_length && input[quote_end + 1] == '\"') {
+//                    quote_end += 2;
+//                } else {
+//                    quote_end++;
+//                }
+//            }
+//
+//            // Extract the quoted string
+//            char* quoted_string = strndup(&input[position +1], quote_end - position - 1);
+//            char* processed_quoted_string = process_escape_sequences(quoted_string);
+//            free(quoted_string);
+//
+//            // Create a new token with the processed quoted string
+//            Token newToken;
+//            newToken.type = determine_token_type(&currentChar);
+//            newToken.value = processed_quoted_string;
+//            CL_insert(tokens, newToken, -1);
+//
+//            // Move the position to the end of the quoted string
+//            position = quote_end + 1;
+//            continue;
+//        }  else {
+//            // Handle non-quoted strings
+//            size_t word_end = position;
+//            while (word_end < input_length && !isspace(input[word_end]) &&
+//                   !strchr("|><;\"", input[word_end])) {
+//                if (input[word_end] == '\\' && (word_end + 1) < input_length) {
+//                    // Skip escaped characters
+//                    word_end += 2;
+//                } else {
+//                    word_end++;
+//                }
+//            }
+//
+//                // Extract the word
+//                char* word = strndup(&input[position], word_end - position);
+//                char* processed_word = process_escape_sequences(word);
+//                free(word);
+//
+//                // Determine the token type
+//                TokenType type = determine_token_type(processed_word);
+//
+//            // Globbing
+//            glob_t glob_result;
+//            if (glob(processed_word, GLOB_TILDE_CHECK, NULL, &glob_result) == 0) {
+//                for (size_t i = 0; i < glob_result.gl_pathc; i++) {
+//                    Token globbed_token;
+//                    globbed_token.type = TOK_WORD;
+//                    globbed_token.value = strdup(glob_result.gl_pathv[i]);
+//                    CL_append(tokens, globbed_token);
+//                }
+//                globfree(&glob_result);
+//            } else {
+//
+//                // Create a new token with the processed word and type
+//                Token newToken;
+//                newToken.type = type;
+//                newToken.value = processed_word;
+//                CL_insert(tokens, newToken, -1);
+//            }
+//
+//            // Move the position to the end of the word or the special character
+//            position = word_end;
+//        }
+//
+//        if (position < input_length && input[position] == '\"'){
+//            size_t quote_end = position + 1;
+//            while (quote_end < input_length && input[quote_end] != '\"') {
+//                // Skip escaped quotes
+//                if (input[quote_end] == '\\' && (quote_end + 1) < input_length && input[quote_end + 1] == '\"') {
+//                    quote_end += 2;
+//                } else {
+//                    quote_end++;
+//                }
+//            }
+//
+//            // Extract the quoted string
+//            char* quoted_string = strndup(&input[position +1], quote_end - position - 1);
+//            char* processed_quoted_string = process_escape_sequences(quoted_string);
+//            free(quoted_string);
+//
+//            // Create a new token with the processed quoted string
+//            Token newToken;
+//            newToken.type =  determine_token_type(&currentChar);
+//            newToken.value = processed_quoted_string;
+//            CL_insert(tokens, newToken, -1);
+//
+//            // Move the position to the end of the quoted string
+//            position = quote_end + 1;
+//            continue;
+//
+//
+//        }
+//
+//    }
+//
+//    return tokens;
+//}
 
 
 // Documented in .h file

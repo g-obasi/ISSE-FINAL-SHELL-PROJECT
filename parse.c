@@ -9,7 +9,7 @@
 
 // Documented in the .h file
 Pipeline* Parse(CList tokens, char *errmsg, size_t errmsg_sz) {
-    assert(tokens);
+//    assert(tokens);
 
     Pipeline* pl = PLD_new();
     Command* cmd = CMD_new();

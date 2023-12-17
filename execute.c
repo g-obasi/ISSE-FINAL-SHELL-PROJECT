@@ -8,7 +8,6 @@
 
 
 #include "execute.h"
-
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -16,6 +15,7 @@
 #include <string.h>
 #include "pipeline.h"
 #include <sys/wait.h>
+//#include <errno.h>
 
 
 // Exit the shell - Documented in execute.h
@@ -39,6 +39,7 @@ void builtin_cd(int argc, char **argv) {
         perror("cd");
     }
 }
+
 
 // Print the current directory - Documented in execute.h
 void builtin_pwd(int out_fd, int argc, char **argv) {
@@ -169,6 +170,48 @@ char*** split_into_commands(Command* cmd) {
     return cmds;
 }
 
+/*
+ * Definition: This function checks if a shell command is valid.
+ *
+ * Parameters:
+ *   cmd    a pointer to a character array that represents the command.
+ *
+ * Returns:
+ *   An integer that indicates whether the command is valid. It returns 1 if the command is valid, and 0 otherwise.
+ *
+ * Details:
+ *   This function first checks if the command is NULL or empty.
+ *   If it is, the function returns 0 to indicate that the command is not valid.
+ */
+int is_valid_command(char* cmd) {
+
+    if (cmd == NULL) {
+        return 0;
+    }
+
+    if (strlen(cmd) == 0 || strcspn(cmd, " ") == 0) {
+        // empty or just spaces
+        return 0;
+    }
+
+    if (cmd[0] == '|' || cmd[0] == '<' || cmd[0] == '>' ||
+        cmd[strlen(cmd)-1] == '|' || cmd[strlen(cmd)-1] == '<' ||
+        cmd[strlen(cmd)-1] == '>') {
+        // can't start/end with pipe/redirection
+        printf("Error: command cannot start/end with - pipe/redirection");
+        return 0;
+    }
+
+    // list of invalid "commands"
+    if (access(cmd, X_OK) == 0) {
+        return 1;  // Command is valid
+    } else {
+        return 0;  // Command is not valid
+    }
+
+    return 1; // valid
+}
+
 
 /*
  * Definition: This function prints the commands that are split by the
@@ -229,7 +272,7 @@ void execute_pipeline(Pipeline* pl) {
     }
 
     char*** cmds = split_into_commands(pl->head);
-    print_commands(cmds);
+//    print_commands(cmds); // see what's in the cmds array
 
     if (cmds == NULL || cmds[0][0] == NULL){
         return;

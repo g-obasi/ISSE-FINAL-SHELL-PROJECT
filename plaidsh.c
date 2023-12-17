@@ -28,7 +28,7 @@ int main() {
 
         // Parse tokens into a pipeline
         pipeline  = Parse(tokens,errmsg,sizeof(errmsg));
-        PLD_print(pipeline);
+//        PLD_print(pipeline);
 
         // Execute the pipeline
         execute_pipeline(pipeline);
