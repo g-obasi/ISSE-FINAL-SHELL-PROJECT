@@ -10,4 +10,4 @@
 
 # See sample run below
 
-Screenshot 2023-12-16 235034.png
+![plaid_shell](https://github.com/g-obasi/ISSE-FINAL-SHELL-PROJECT/assets/23635921/482f4ada-8f20-4186-8357-33f0ccd842be)
