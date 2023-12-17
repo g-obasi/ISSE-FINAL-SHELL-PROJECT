@@ -1,9 +1,10 @@
 /*
  * parse.h
  * 
- * Simple description
+ * Simple description:
+ * for parsing tokens into a pipline object building an abstract syntax tree
  *
- * Author:
+ * Author: Greenfield Obasi
  */
 
 
@@ -15,16 +16,14 @@
 #include "clist.h"
 
 /*
- * Parses a list of tokens into an ExprTree, which is the abstract
- * syntax tree for the ExpressionWhizz grammar.  See the assignment
- * writeup for the BNF.
+ * Parses a list of tokens into a Pipeline object building an abstract syntax tree.
  *
  * Parameters:
  *   tokens     List of tokens remaining to be parsed
  *   errmsg     Return space for an error message, filled in in case of error
  *   errmsg_sz  The size of errmsg
  * 
- * Returns: The parsed ExprTree on success. If a parsing error is
+ * Returns: The parsed Pipeline on success. If a parsing error is
  *   encountered, copies an error message into errmsg and returns
  *   NULL.
  */

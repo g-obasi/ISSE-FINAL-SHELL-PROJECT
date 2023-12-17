@@ -1,9 +1,9 @@
 /*
  * clist.c
  *
- * Linked list implementation for ISSE Assignment 5
+ * Linked list implementation
  *
- * Author:
+ * Author: Greenfield Obasi
  */
 
 #include <stdio.h>
@@ -93,7 +93,6 @@ void CL_free(CList list)
 // Documented in .h file
 int CL_length(CList list)
 {
-//    assert(list);
 
         if (list == NULL || list->head == NULL) {
             // Handle the case of an empty list

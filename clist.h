@@ -20,9 +20,10 @@ typedef struct _clist *CList;
 // list type simply by changing this typedef and the definition for
 // INVALID_RETURN
 typedef Token CListElementType;
-
+typedef CList Return;
 // Used to indicate an error on some functions
 #define INVALID_RETURN ((CListElementType){TOK_END})
+#define INVALID ((Return){TOK_END})
 
 /*
  * Create a new CList

@@ -1,6 +1,11 @@
-//
-// Created by gobasi on 12/14/23.
-//
+/*
+ * execute.c
+ *
+ * implementation of th execute_pipeline and its helper functions
+ *
+ * Author: Greenfield Obasi <gstjean@andrew.cmu.edu>
+ */
+
 
 #include "execute.h"
 
@@ -12,19 +17,18 @@
 #include "pipeline.h"
 #include <sys/wait.h>
 
-pid_t wait(int *status_ptr);
 
-// Exit the shell
+// Exit the shell - Documented in execute.h
 void builtin_exit(int argc, char **argv) {
     exit(0);
 }
 
-// Print author information
+// Print author information Documented in execute.h
 void builtin_author(int out_fd, int argc, char **argv) {
     dprintf(out_fd, "Author: Greenfield Obasi St Jean\n");
 }
 
-// Change the current directory
+// Change the current directory Documented in execute.h
 void builtin_cd(int argc, char **argv) {
     if (argc != 2) {
         fprintf(stderr, "Usage: cd <directory>\n");
@@ -36,7 +40,7 @@ void builtin_cd(int argc, char **argv) {
     }
 }
 
-// Print the current directory
+// Print the current directory - Documented in execute.h
 void builtin_pwd(int out_fd, int argc, char **argv) {
     char cwd[1024];
     if (getcwd(cwd, sizeof(cwd)) == NULL) {
@@ -47,7 +51,7 @@ void builtin_pwd(int out_fd, int argc, char **argv) {
 }
 
 
-// Execute an external command
+// Execute an external command -Documented in execute.h
 int forkexec_external_cmd(int in_fd, int out_fd, int next_in_fd, char **argv) {
     pid_t pid = fork();
     if (pid < 0) {
@@ -85,6 +89,17 @@ int forkexec_external_cmd(int in_fd, int out_fd, int next_in_fd, char **argv) {
     return pid;
 }
 
+
+/*
+ * Definition: This function frees up the memory allocated for the arguments
+ *             array created by the split_into_commands function.
+ *
+ * Parameters:
+ *   args    a pointer to an array of strings that contains the arguments.
+ *
+ * Returns:
+ *   None
+ */
 void free_args(char** args) {
     for (int i = 0; args[i] != NULL; i++) {
         free(args[i]);
@@ -93,26 +108,31 @@ void free_args(char** args) {
 }
 
 
-char** split_into_args(Command* cmd) {
-    // Get the number of arguments in the command
-    int num_args = CL_length(cmd->arguments);
-
-    // Allocate memory for the array of arguments
-    char** args = (char**) malloc((num_args + 1) * sizeof(char*));
-
-    // Copy each argument to the array
-    for (int i = 0; i < num_args; i++) {
-        Token token = CL_nth(cmd->arguments, i);
-        if (token.type == TOK_WORD || token.type == TOK_QUOTED_WORD || token.type == TOK_PIPE) {
-            args[i] = strdup(token.value);
-        }
-    }
-
-    // The last element of the array should be NULL
-    args[num_args] = NULL;
-
-    return args;
-}
+/*
+ * Definition: This function splits the tokens of a command into separate commands.
+ *
+ * Parameters:
+ *   cmd    a pointer to a Command structure that contains the command's arguments.
+ *
+ * Returns:
+ *   A pointer to a three-dimensional array of characters that represents the
+ *   separate commands.
+ *
+ * Details:
+ *   This function first gets the number of arguments in the command. It then
+ *   allocates memory for an array of commands. Each command is represented as
+ *   an array of strings (i.e., an array of character arrays), so the commands
+ *   array is a three-dimensional array of characters.
+ *
+ *   The function then iterates over each token in the command's arguments. If
+ *   the token is a word or a quoted word, it duplicates the token's value and
+ *   adds it to the current command. If the token is a pipe, it ends the current
+ *   command and starts a new one.
+ *
+ *   The last element of each command array and the last element of the commands
+ *   array are set to NULL to indicate the end of the command and the end of the
+ *   commands, respectively.
+ */
 
 char*** split_into_commands(Command* cmd) {
     // Get the number of arguments in the command
@@ -150,6 +170,46 @@ char*** split_into_commands(Command* cmd) {
 }
 
 
+/*
+ * Definition: This function prints the commands that are split by the
+ *             split_into_commands function.
+ *
+ * Parameters:
+ *   cmds    a pointer to a three-dimensional array of characters that
+ *           represents the separate commands.
+ *
+ * Returns:
+ *   None
+ *
+ * Details:
+ *   This function iterates over each command in the cmds array. For each
+ *   command, it prints the command number (starting from 1) and then iterates
+ *   over each argument in the command. For each argument, it prints the
+ *   argument number (starting from 1) and the argument itself.
+ *
+ *   The function assumes that the cmds array and each command array are
+ *   NULL-terminated, i.e., the last element of each array is NULL. This is
+ *   used to determine when to stop iterating over the arrays.
+ *
+ *   The function uses the standard printf function to print the command and
+ *   argument numbers and the arguments themselves. The output is sent to the
+ *   standard output.
+ */
+
+void print_commands(char*** cmds) {
+    // Iterate over each command
+    for (int i = 0; cmds[i] != NULL; i++) {
+        printf("Command %d:\n", i + 1);
+
+        // Iterate over each argument in the command
+        for (int j = 0; cmds[i][j] != NULL; j++) {
+            printf("  Argument %d: %s\n", j + 1, cmds[i][j]);
+        }
+    }
+}
+
+
+//execute the pipeline - Documented in execute.h
 void execute_pipeline(Pipeline* pl) {
     int num_children = 0;
     int pipefd[2];
@@ -158,7 +218,9 @@ void execute_pipeline(Pipeline* pl) {
     int next_in_fd = -1;
 
     // If the pipeline has an input file, open it and set it as the input
-    if (pl->input_file != NULL) {
+    if (pl == NULL) {
+        return;
+    }else if (pl->input_file != NULL) {
         in_fd = open(pl->input_file, O_RDONLY);
         if (in_fd < 0) {
             perror("open input file");
@@ -167,6 +229,11 @@ void execute_pipeline(Pipeline* pl) {
     }
 
     char*** cmds = split_into_commands(pl->head);
+    print_commands(cmds);
+
+    if (cmds == NULL || cmds[0][0] == NULL){
+        return;
+    }
     for (int i = 0; cmds[i] != NULL; i++) {
         char** argv = cmds[i];
 
@@ -200,6 +267,9 @@ void execute_pipeline(Pipeline* pl) {
             builtin_exit(argc, argv);
         } else if (strcasecmp(argv[0], "author") == 0 ) {
             builtin_author(out_fd, argc, argv);
+            if (out_fd != STDOUT_FILENO) {
+                close(out_fd);
+            }
         } else if (strcmp(argv[0], "cd") == 0) {
             builtin_cd(argc, argv);
         } else if (strcmp(argv[0], "pwd") == 0) {
@@ -219,23 +289,19 @@ void execute_pipeline(Pipeline* pl) {
         next_in_fd = -1;
     }
 
-    // Close the output file descriptor if it was opened
-    if (out_fd != STDOUT_FILENO) {
-        close(out_fd);
-    }
-
     // Wait for all child processes to finish
     while(num_children > 0){
         int status;
         pid_t pid = wait(&status);
         if (pid == -1) {
             perror("wait");
-        } else {
+        }
+//        useful for debugging
+        else {
             if (WIFEXITED(status)) {
                 printf("Child %d terminated normally with exit status %d\n", pid, WEXITSTATUS(status));
             } else {
                 printf("Child %d did not terminate normally\n", pid);
-                // Handle error...
             }
         }
         num_children--;

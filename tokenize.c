@@ -93,12 +93,14 @@ char* process_escape_sequences(const char* str) {
 }
 
 
+// Documented in the .h file
 CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz) {
     CList tokens = CL_new();
     size_t input_length = strlen(input);
     size_t position = 0;
 
     while (position < input_length) {
+
         char currentChar = input[position];
         // Skip whitespace
         if (isspace(currentChar)) {
@@ -106,6 +108,12 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz) {
             continue;
             // Handle special characters as separate tokens
         } else if (strchr("|><;", currentChar) != NULL) {
+            if (position == 0 || position == input_length - 1 ||
+                strchr("|><;", input[position - 1]) != NULL ||
+                strchr("|><;", input[position + 1]) != NULL) {
+                snprintf(errmsg, errmsg_sz, "Invalid use of special character '%c'", currentChar);
+                return NULL;
+            }
             Token newToken;
             newToken.type = determine_token_type(&currentChar);
             newToken.value = NULL;
@@ -213,13 +221,6 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz) {
 
     }
 
-//     Add END token
-//    Token end_token;
-//    end_token.type = TOK_END;
-//    end_token.value = NULL;
-//    CL_insert(tokens, end_token, -1);
-
-    TOK_print(tokens);
     return tokens;
 }
 
@@ -230,7 +231,6 @@ TokenType TOK_next_type(CList tokens)
     if (CL_is_empty(tokens)) {
         return TOK_END;
     } else {
-//        Token nextToken = CL_next(tokens);
         return CL_nth(tokens,0).type;
     }
 }
@@ -261,15 +261,15 @@ void TOK_consume(CList tokens)
 }
 
 
-// Documented in .h file
-void TOK_unexpected(CList tokens, char *errmsg, size_t errmsg_sz)
-{
-    Token next = TOK_next(tokens);
-    snprintf(errmsg, errmsg_sz, "Unexpected token: %s", TT_to_str(next.type));
-}
-
-
-// Update the print_token function
+/*
+ * helper function to print the tokens
+ *
+ * Parameters:
+ *   position   The list of tokens
+ *   element    The element to be printed
+ *   data       Additional data to be passed in
+ * Returns: None.
+ */
 void print_token(int position, CListElementType element, void *data) {
     Token current = element;
     if (current.type == TOK_WORD || current.type == TOK_QUOTED_WORD) {

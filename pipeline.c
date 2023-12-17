@@ -12,7 +12,7 @@
 #include <stddef.h>
 #include "pipeline.h"
 #include "tokenize.h"
-
+#include <assert.h>
 
 Command* CMD_new() {
     Command* cmd = (Command*) malloc(sizeof(Command));
@@ -40,6 +40,7 @@ Pipeline* PLD_new() {
 
 // Get the length of the pipeline
 int PLD_length(Pipeline* pl) {
+    assert(pl);
     int length = 0;
     Command* cmd = pl->head;
     while (cmd != NULL) {
@@ -52,6 +53,10 @@ int PLD_length(Pipeline* pl) {
 
 // Free the memory occupied by a Pipeline
 void PLD_free(Pipeline* pl) {
+    if (pl==NULL){
+        return;
+    }
+
     Command* cmd = pl->head;
     while (cmd != NULL) {
         Command* next = cmd->next;
@@ -66,7 +71,7 @@ void PLD_free(Pipeline* pl) {
 
 // Remove a command at a specific position in the pipeline
 void PLD_remove(Pipeline* pl, int index) {
-    if (pl->head == NULL) {
+    if (pl->head == NULL || pl == NULL) {
         return;
     }
     // Special case for removing the head of the pipeline
@@ -88,6 +93,8 @@ void PLD_remove(Pipeline* pl, int index) {
 
 // Get a command at a specific position in the pipeline
 Command* PLD_get(Pipeline* pl, int index) {
+    assert(pl);
+
     int i = 0;
     Command* cmd = pl->head;
     while (cmd != NULL && i < index) {
@@ -125,6 +132,9 @@ void print_argument(int position, CListElementType element, void *data) {
 
 // Print the pipeline for debugging purposes
 void PLD_print(Pipeline* pl) {
+    if (pl==NULL){
+        return;
+    }
     Command* cmd = pl->head;
     while (cmd != NULL) {
 //        pl_print_command(cmd);
@@ -140,6 +150,9 @@ void PLD_print(Pipeline* pl) {
 
 // Set the redirection for a pipeline
 void PLD_set_redirection(Pipeline* pl, TokenType redirection_type, const char *filename) {
+    if (pl==NULL){
+        return;
+    }
     if (redirection_type == TOK_LESSTHAN) {
         free(pl->input_file);
         pl->input_file = strdup(filename);

@@ -1,6 +1,10 @@
-//
-// Created by gobasi on 12/10/23.
-//
+/*
+ * glob_test.c
+ *
+ * simple test to test the globbing functionality
+ *
+ * Author: Greenfield Obasi
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,44 +50,3 @@ int main() {
 }
 
 
-//#include <stdio.h>
-//#include <stdlib.h>
-//#include <glob.h>
-//
-//char** perform_globbing(const char* pattern) {
-//    glob_t glob_result;
-//    int ret = glob(pattern, GLOB_TILDE_CHECK, NULL, &glob_result);
-//
-//    if (ret == 0) {
-//        printf("Globbing result for pattern '%s':\n", pattern);
-//        char** matches = malloc(glob_result.gl_pathc * sizeof(char*));
-//        for (size_t i = 0; i < glob_result.gl_pathc; ++i) {
-//            printf("%s\n", glob_result.gl_pathv[i]);
-//            matches[i] = strdup(glob_result.gl_pathv[i]);
-//        }
-//        globfree(&glob_result);
-//        return matches;
-//    } else {
-//        printf("No matches found for pattern '%s', or tilde expansion failed.\n", pattern);
-//        globfree(&glob_result);
-//        return NULL;
-//    }
-//}
-//
-//int main() {
-//    const char* pattern = "*.c"; // Replace with your pattern
-//    char** matched_files = perform_globbing(pattern);
-//
-//    // Use the matched_files as needed
-//    // ...
-//
-//    // Remember to free the allocated memory
-//    if (matched_files) {
-//        for (size_t i = 0; matched_files[i]; ++i) {
-//            free(matched_files[i]);
-//        }
-//        free(matched_files);
-//    }
-//
-//    return 0;
-//}
