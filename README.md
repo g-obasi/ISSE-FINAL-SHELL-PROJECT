@@ -10,6 +10,4 @@
 
 # See sample run below
 
-![image](/home/gobasi/ISSE-linux/Assignments/project/Screenshot 2023-12-16 235034.png)
-
-
+Screenshot 2023-12-16 235034.png
